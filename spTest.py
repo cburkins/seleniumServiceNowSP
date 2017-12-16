@@ -3,6 +3,7 @@ import unittest
 from selenium.webdriver.common.keys import Keys
 import sys
 from selenium.webdriver.chrome.options import Options
+import string
 
 # ------------------------------------------------------------------------------
 
@@ -13,12 +14,16 @@ def vprint(print_me):
         sys.stdout.write("%s" % print_me)
 
 # ------------------------------------------------------------------------------
+def printable(theString):
+	return(filter(lambda x: x in string.printable, theString));
+
+# ------------------------------------------------------------------------------
 
 def lookForText(): 
 	# Assert the "New Hire" text is within the search results
+	import string
 	myResults = driver.find_element_by_xpath("//*[@id='xb218bc42db4e4bc4117c5d30cf96194a']/div");
 	theText = myResults.text;
-	import string
 	theText = filter(lambda x: x in string.printable, theText)
 	assert "New Hire" in theText;
 
@@ -53,6 +58,27 @@ def searchInIrisServicePortal(websiteURL, search_string, catalogSysId):
 	except:
 		print "Failed"
 
+
+	# Try to find the whole list of catalog items
+	try: 
+		#xPathDesired = "//a[contains(@href,'?id=iris_cat_item')]"
+		xPathDesired = "//a[contains(@href, '?id=iris_cat_item')]"
+		desiredList = driver.find_elements_by_xpath(xPathDesired);
+	except:
+		print "Failed to find list"
+	else:
+		count = 1;
+		for element in desiredList:
+			print("   (%2d) --> %s" % (count, printable(element.text)));
+
+			vprint("        INNER: %s\n" % (printable(element.get_attribute('innerHTML'))))
+			vprint("        OUTER: %s\n" % (printable(element.get_attribute('outerHTML'))))
+			vprint("        HREF:  %s\n" % (printable(element.get_attribute('href'))))
+			vprint("        TEXT:  %s\n" % (printable(element.text)))
+			count = count + 1;
+
+
+
 	vprint ("   Catalog URL = %s\n" % (catURL))
 	vprint ("   xPath = %s\n" % (xPathDesired))
 
@@ -73,8 +99,10 @@ driver.get("http://jnjsandbox5.service-now.com/iris_gl");
 
 
 print "\n\n\n\n";
-searchInIrisServicePortal("http://jnjsandbox5.service-now.com/iris_gl", "new hire", "3e94804b6f88ad041e02e3764b3ee4cf");
-searchInIrisServicePortal("http://jnjsandbox5.service-now.com/iris_gl", "email", "abea375f75a20d0029e60de16298b1bb");
+websiteURL="http://jnjsandbox5.service-now.com/iris_gl"
+#websiteURL="http://jnjprod.service-now.com/iris_gl"
+searchInIrisServicePortal(websiteURL, "new hire", "3e94804b6f88ad041e02e3764b3ee4cf");
+searchInIrisServicePortal(websiteURL, "email", "abea375f75a20d0029e60de16298b1bb");
 
 
 
