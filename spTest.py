@@ -126,8 +126,8 @@ driver.get("http://jnjsandbox5.service-now.com/iris_gl");
 
 
 
-print ("\n\n *** Searching now ***\n\n")
 websiteURL="http://jnjsandbox5.service-now.com/iris_gl"
+print ("\n\n *** Searching now (%s) ***\n\n" % (websiteURL))
 #websiteURL="http://jnjprod.service-now.com/iris_gl"
 
 # Define the list of searches (1st position is search team, 2nd position is desired catalog item)
