@@ -72,7 +72,7 @@ def searchInIrisServicePortal(websiteURL, search_string, catalogSysId):
 	xPathDesired = "//a[contains(@href,'%s')]" % (catURL)
 	try: 
 		desiredLink = driver.find_element_by_xpath(xPathDesired);
-		print("Found (%s)" % (desiredLink.text));
+		print("Found (Catalog Item: %s)" % (desiredLink.text));
 	except:
 		print "Failed"
 	vprint ("   Catalog URL = %s\n" % (catURL))
@@ -112,6 +112,8 @@ for cmdlineOption in (vars(args)):
 	vprint ("   %s: %s\n" % (cmdlineOption, vars(args)[cmdlineOption]))
 vprint("\n\n");
 
+
+# Open the browser
 chrome_options = Options()
 #chrome_options.add_argument("start-maximized")
 #chrome_options.add_argument("headless")
@@ -127,11 +129,16 @@ driver.get("http://jnjsandbox5.service-now.com/iris_gl");
 print ("\n\n *** Searching now ***\n\n")
 websiteURL="http://jnjsandbox5.service-now.com/iris_gl"
 #websiteURL="http://jnjprod.service-now.com/iris_gl"
-searchInIrisServicePortal(websiteURL, "new hire", "3e94804b6f88ad041e02e3764b3ee4cf");
-searchInIrisServicePortal(websiteURL, "email", "abea375f75a20d0029e60de16298b1bb");
 
+# Define the list of searches (1st position is search team, 2nd position is desired catalog item)
+searchList = [
+	["new hire", "3e94804b6f88ad041e02e3764b3ee4cf"],
+	["email", "abea375f75a20d0029e60de16298b1bb"]
+]
 
-
+# Loop through all desired searches, and search for each
+for searchConfig in searchList:
+	searchInIrisServicePortal(websiteURL, searchConfig[0], searchConfig[1]);
 
 print "\n\nAll finished, closing the browser now..."
 driver.close();
