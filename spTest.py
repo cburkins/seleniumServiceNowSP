@@ -27,19 +27,36 @@ def lookForText():
 	theText = filter(lambda x: x in string.printable, theText)
 	assert "New Hire" in theText;
 
+
+# ------------------------------------------------------------------------------
+
+def findAllCatalogItems():
+
+	# Purely additional info, search for all catalog items
+	try: 
+		xPathDesired = "//a[contains(@href, '?id=iris_cat_item')]"
+		desiredList = driver.find_elements_by_xpath(xPathDesired);
+	except:
+		print "Failed to find list"
+	else:
+		count = 1;
+		for count,element in enumerate(desiredList):
+			print("   (%2d) %s" % (count+1, printable(element.text)));
+			# vprint("        INNER: %s\n" % (printable(element.get_attribute('innerHTML'))))
+			# vprint("        OUTER: %s\n" % (printable(element.get_attribute('outerHTML'))))
+			vprint("        HREF:  %s\n" % (printable(element.get_attribute('href'))))
+
 # ------------------------------------------------------------------------------
 
 def searchInIrisServicePortal(websiteURL, search_string, catalogSysId):
 
-	vprint ("Loading website\n")
+	# Load the desired website
 	driver.get(websiteURL);
 	driver.implicitly_wait(15) # seconds
-	# Find the search box
+
+	# Find the search box and type in the search string
 	elem = driver.find_element_by_xpath("//*[@id='homepage-search']/div/div[1]/div[2]/form/div/input");
-
-	outputString = "Searching '%s': " % (search_string)
-	sys.stdout.write("%-25s" % (outputString))
-
+	sys.stdout.write("Searching %-15s" % ("'" + search_string + "' :"))
 	elem.clear()
 	elem.send_keys(search_string);
 	elem.send_keys(Keys.RETURN);
@@ -49,56 +66,65 @@ def searchInIrisServicePortal(websiteURL, search_string, catalogSysId):
 	# Assert the New Hire catalog item is within the search results
 	#desiredLink = driver.find_element_by_xpath("//a[contains(@href,'?id=iris_cat_item&sys_id=3e94804b6f88ad041e02e3764b3ee4cf')]");
 
+
+	# Test for the desired catalog item, searching by ServiceNow sys_id
 	catURL = '?id=iris_cat_item&sys_id=%s' % (catalogSysId)
 	xPathDesired = "//a[contains(@href,'%s')]" % (catURL)
-
 	try: 
 		desiredLink = driver.find_element_by_xpath(xPathDesired);
 		print("Found (%s)" % (desiredLink.text));
 	except:
 		print "Failed"
-
-
-	# Try to find the whole list of catalog items
-	try: 
-		#xPathDesired = "//a[contains(@href,'?id=iris_cat_item')]"
-		xPathDesired = "//a[contains(@href, '?id=iris_cat_item')]"
-		desiredList = driver.find_elements_by_xpath(xPathDesired);
-	except:
-		print "Failed to find list"
-	else:
-		count = 1;
-		for element in desiredList:
-			print("   (%2d) --> %s" % (count, printable(element.text)));
-
-			vprint("        INNER: %s\n" % (printable(element.get_attribute('innerHTML'))))
-			vprint("        OUTER: %s\n" % (printable(element.get_attribute('outerHTML'))))
-			vprint("        HREF:  %s\n" % (printable(element.get_attribute('href'))))
-			vprint("        TEXT:  %s\n" % (printable(element.text)))
-			count = count + 1;
-
-
-
 	vprint ("   Catalog URL = %s\n" % (catURL))
 	vprint ("   xPath = %s\n" % (xPathDesired))
 
+	# findAllCatalogItems();
 
 # ------------------------------------------------------------------------------
 # --------------------------- Main ---------------------------------------------
 # ------------------------------------------------------------------------------
 
-verbose = False;
+
+verbose = False
+
+import getpass
+import argparse
+ 
+# Parse command-line arguments (Create ArgumentParser object)
+# By default, program name (shown in 'help' function) will be the same as the name of this file
+# Program name either comes from sys.argv[0] (invocation of this program) or from prog= argument to ArgumentParser
+# epilog= argument will be display last in help usage (strips out newlines)
+parser = argparse.ArgumentParser(description='Does search testing on Iris (ServiceNow) website')
+ 
+# Test for verbose flag
+parser.add_argument('-v', dest='verbose', action='store_true', help='verbose_mode')
+# Query for string 
+parser.add_argument('--message',  default="Well, Hi there, Chad !")
+
+# Get the object returned by parse_args
+args = parser.parse_args()
+verbose = args.verbose;
+ 
+# Prints command-line params
+vprint("\nGiven arguments: %s\n\n" % (sys.argv[1:]))
+vprint("Interpreted arguments: (via argparse object)\n")
+for cmdlineOption in (vars(args)):
+	vprint ("   %s: %s\n" % (cmdlineOption, vars(args)[cmdlineOption]))
+vprint("\n\n");
+
 chrome_options = Options()
-chrome_options.add_argument("--dns-prefetch-disable")
-print ("Opening browser")
+#chrome_options.add_argument("start-maximized")
+#chrome_options.add_argument("headless")
+print ("\n *** Opening browser ***\n")
 driver = webdriver.Chrome(chrome_options=chrome_options)
 #driver = webdriver.Chrome()
 
-# Pre-load a website
+# Pre-load a website to get past initial start-up erros
 driver.get("http://jnjsandbox5.service-now.com/iris_gl");
 
 
-print "\n\n\n\n";
+
+print ("\n\n *** Searching now ***\n\n")
 websiteURL="http://jnjsandbox5.service-now.com/iris_gl"
 #websiteURL="http://jnjprod.service-now.com/iris_gl"
 searchInIrisServicePortal(websiteURL, "new hire", "3e94804b6f88ad041e02e3764b3ee4cf");
