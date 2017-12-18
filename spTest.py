@@ -1,3 +1,4 @@
+
 from selenium import webdriver
 import unittest
 from selenium.webdriver.common.keys import Keys
@@ -55,15 +56,18 @@ def findAllCatalogItems():
 
 # ------------------------------------------------------------------------------
 
-def searchInIrisServicePortal(websiteURL, search_string, catalogSysId):
+def searchInIrisServicePortal(websiteURL, search_string, catalogSysId, itemTitle):
 
 	# Load the desired website
 	driver.get(websiteURL);
 	driver.implicitly_wait(10) # seconds
 
-	# Find the search box and type in the search string
+
+	# Wait for the search box to show up
 	elem = driver.find_element_by_xpath("//*[@id='homepage-search']/div/div[1]/div[2]/form/div/input");
-	sys.stdout.write("Searching %-20s" % ("'" + search_string + "' :"))
+
+	# Type in the search string
+	sys.stdout.write("Searching %-37s" % ("'" + search_string + "' :"))
 	elem.clear()
 	elem.send_keys(search_string);
 	elem.send_keys(Keys.RETURN);
@@ -73,31 +77,89 @@ def searchInIrisServicePortal(websiteURL, search_string, catalogSysId):
 	# Assert the New Hire catalog item is within the search results
 	#desiredLink = driver.find_element_by_xpath("//a[contains(@href,'?id=iris_cat_item&sys_id=3e94804b6f88ad041e02e3764b3ee4cf')]");
 
+	# Wait for search results
+	wait = WebDriverWait(driver, 20)
+	xPathDesired="//h4[contains(text(),'Search results for:')]"
+	wait.until(EC.visibility_of_element_located((By.XPATH, xPathDesired)))
 
-	# Test for the desired catalog item, locating by xpath using ServiceNow sys_id within anchor tag
+	# Construct correct XPath to find the desired catalog item on the page
 	catURL = '?id=iris_cat_item&sys_id=%s' % (catalogSysId)
 	xPathDesired = "//a[contains(@href,'%s')]" % (catURL)
-	try: 
-		desiredLink = driver.find_element_by_xpath(xPathDesired);
-		print("Found (Catalog Item: %s)" % (desiredLink.text));
-	except:
-		print "Failed"
-	vprint ("   Catalog URL = %s\n" % (catURL))
-	vprint ("   xPath = %s\n" % (xPathDesired))
 
 	# Attempting explict wait
 	driver.implicitly_wait(0) # seconds
-	print "   Looking again"
 	wait = WebDriverWait(driver, 2)
 	try:
 		wait.until(EC.visibility_of_element_located((By.XPATH, xPathDesired)))
 	except:
-		print ("      Failed again");
+		print ("Failed (%s)" % (itemTitle));
 	else:
-		print ("      Found again");
+		desiredLink = driver.find_element_by_xpath(xPathDesired);
+		print("Found  (Catalog Item: %s)" % (printable(desiredLink.text)));
+	vprint ("   Catalog URL = %s\n" % (catURL))
+	vprint ("   xPath = %s\n" % (xPathDesired))
+
 	# findAllCatalogItems();
 
 # ------------------------------------------------------------------------------
+
+def readSearchConfig():
+
+	# Read config file
+	import csv
+	searchList = [];
+	with open('SearchMonitoringCriteria2.csv', 'rb') as csvfile:
+		searchConfigFile = csv.reader(csvfile, delimiter=',', quotechar='"')
+		# Skip the first line
+		next(searchConfigFile, None);
+		# Loop through all the remaining rows
+		for row in searchConfigFile:
+			# File is currently sys_id, title, search_term
+			# Create a row where order search_term, sys_sid, title
+			# search_term
+			searchTerm = []
+			searchTerm.append(row[2]);
+			# sys_id
+			searchTerm.append(row[0]);
+			# title
+			searchTerm.append(row[1]);
+
+			if (len(searchTerm[1]) == 32):
+				searchList.append(searchTerm);
+			else:
+				print("Skipping (no catalog sys_id given): %s" % (searchTerm[2]));
+
+	return searchList
+
+
+# ------------------------------------------------------------------------------
+
+def readDefaultSearchList():
+
+	# Define the list of searches (1st position is search team, 2nd position is desired catalog item)
+	searchListDefault = [
+		# Chad's test
+		["new hire", "3e94804b6f88ad041e02e3764b3ee4cf", "Placeholder title"],
+		["email", "abea375f75a20d0029e60de16298b1bb", "Placeholder title"],
+
+		# # New Hire catalog item
+		["new hire", "3e94804b6f88ad041e02e3764b3ee4cf", "Placeholder title"],
+		["onboard", "3e94804b6f88ad041e02e3764b3ee4cf", "Placeholder title"],
+		["onboarding", "3e94804b6f88ad041e02e3764b3ee4cf", "Placeholder title"],
+		["new account", "3e94804b6f88ad041e02e3764b3ee4cf", "Placeholder title"],
+		["laptop", "3e94804b6f88ad041e02e3764b3ee4cf", "Placeholder title"],
+		["account", "3e94804b6f88ad041e02e3764b3ee4cf", "Placeholder title"],
+		# Access to Terminated or Departed associate's data
+		["access data", "f7e870d61c9ee008cfc05fda97b0699e", "Placeholder title"],
+		["terminated", "f7e870d61c9ee008cfc05fda97b0699e", "Placeholder title"],
+
+		# Reset Password for a business application (currently missing)
+		["reset password", "6efb03b96f33118038ef17831c3ee468", "Catalog Item: Reset Password for a business application"],
+		["password", "6efb03b96f33118038ef17831c3ee468", "Catalog Item: Reset Password for a business application"],
+		["password reset", "6efb03b96f33118038ef17831c3ee468", "Catalog Item: Reset Password for a business application"]
+	]
+	return searchListDefault
+
 # --------------------------- Main ---------------------------------------------
 # ------------------------------------------------------------------------------
 
@@ -129,6 +191,9 @@ for cmdlineOption in (vars(args)):
 	vprint ("   %s: %s\n" % (cmdlineOption, vars(args)[cmdlineOption]))
 vprint("\n\n");
 
+# Get the search terms
+#searchListDefault = readDefaultSearchList();
+searchList = readSearchConfig();
 
 # Open the browser
 chrome_options = Options()
@@ -139,38 +204,32 @@ driver = webdriver.Chrome(chrome_options=chrome_options)
 #driver = webdriver.Chrome()
 
 # Pre-load a website to get past initial start-up erros
-driver.get("http://jnjsandbox5.service-now.com/iris_gl");
-
-
-
 websiteURL="http://jnjsandbox5.service-now.com/iris_gl"
+websiteURL="http://jnjtrain.service-now.com/iris_gl"
+driver.get(websiteURL);
+
+
+
 print ("\n\n *** Searching now (%s) ***\n\n" % (websiteURL))
 #websiteURL="http://jnjprod.service-now.com/iris_gl"
 
-# Define the list of searches (1st position is search team, 2nd position is desired catalog item)
-searchList = [
-	# Chad's test
-	["new hire", "3e94804b6f88ad041e02e3764b3ee4cf"],
-	["email", "abea375f75a20d0029e60de16298b1bb"],
-	# # New Hire catalog item
-	# ["new hire", "3e94804b6f88ad041e02e3764b3ee4cf"],
-	# ["onboard", "3e94804b6f88ad041e02e3764b3ee4cf"],
-	# ["onboarding", "3e94804b6f88ad041e02e3764b3ee4cf"],
-	# ["new account", "3e94804b6f88ad041e02e3764b3ee4cf"],
-	# ["laptop", "3e94804b6f88ad041e02e3764b3ee4cf"],
-	# ["account", "3e94804b6f88ad041e02e3764b3ee4cf"],
-	# # Access to Terminated or Departed associate's data
-	# ["access data", "f7e870d61c9ee008cfc05fda97b0699e"],
-	# ["terminated", "f7e870d61c9ee008cfc05fda97b0699e"],
-	# # Reset Password for a business application (currently missing)
-	["reset password", "6efb03b96f33118038ef17831c3ee468"],
-	# ["password", "6efb03b96f33118038ef17831c3ee468"],
-	# ["password reset", "6efb03b96f33118038ef17831c3ee468"]
-]
+# # Loop through all desired searches, and search for each
+# for searchConfig in searchList:
+# 	searchInIrisServicePortal(websiteURL, searchConfig[0], searchConfig[1], searchConfig[2]);
 
-# Loop through all desired searches, and search for each
-for searchConfig in searchList:
-	searchInIrisServicePortal(websiteURL, searchConfig[0], searchConfig[1]);
+
+for row in searchList:
+	# print ("term=%-20s sys_id=%-40s title=%s" % (row[0], row[1], row[2]))
+	searchInIrisServicePortal(websiteURL, row[0], row[1], row[2]);
+	
+
 
 print "\n\nAll finished, closing the browser now..."
 driver.close();
+
+
+# ------------------------------------------------------------------------------
+# ------------------------------ End -------------------------------------------
+# ------------------------------------------------------------------------------
+
+
