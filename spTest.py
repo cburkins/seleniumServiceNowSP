@@ -105,12 +105,12 @@ def searchInIrisServicePortal(websiteURL, search_string, catalogSysId, itemTitle
 
 # ------------------------------------------------------------------------------
 
-def readSearchConfig():
+def readSearchConfig(configFileName):
 
 	# Read config file
 	import csv
 	searchList = [];
-	with open('SearchMonitoringCriteria2.csv', 'rb') as csvfile:
+	with open(configFileName, 'rb') as csvfile:
 		searchConfigFile = csv.reader(csvfile, delimiter=',', quotechar='"')
 		# Skip the first line
 		next(searchConfigFile, None);
@@ -135,6 +135,8 @@ def readSearchConfig():
 
 
 # ------------------------------------------------------------------------------
+
+# this can be used for testing, in case you don't have an input file
 
 def readDefaultSearchList():
 
@@ -185,12 +187,15 @@ parser.add_argument('--message',  default="Well, Hi there, Chad !")
 parser.add_argument('-p', type=int, help='amount to pause selenium tester', default=1)
 # Configure command-line flag selecting a website
 parser.add_argument('-w', default="http://jnjtrain.service-now.com/iris_gl", help='ServiceNow website to test against')
+# Configure command-line flag selecting a configuration file (for search terms)
+parser.add_argument('-s', default="SearchMonitoringCriteria2.csv", help='list of search terms to run (in CSV format with one header row)')
 
 # Get the object returned by parse_args
 args = parser.parse_args()
 verbose = args.verbose;
 pauseDuration = args.p;
 websiteURL = args.w;
+searchConfigFile = args.s;
 # websiteURL="http://jnjsandbox5.service-now.com/iris_gl"
 # websiteURL="http://jnjtrain.service-now.com/iris_gl"
  
@@ -203,10 +208,16 @@ vprint("\n\n");
 
 # Get the search terms
 #searchListDefault = readDefaultSearchList();
-searchList = readSearchConfig();
+searchList = readSearchConfig(searchConfigFile);
 
-# Show the user the desired website
-print("\nWebsite URL: %s\n\n" % (websiteURL));
+# Show the user all the parameters
+print("\n");
+print("%20s: %s" % ("Website URL", websiteURL));
+print("%20s: %s" % ("configFile", searchConfigFile))
+print("%20s: %s" % ("Pause Duration", pauseDuration))
+print("%20s: %d" % ("Number of tests", len(searchList)))
+
+print("\n\n");
 
 # Verify that the user is ready ('y' is the only answer that will proceed)
 response = raw_input("\nReady to go ? ")
@@ -226,8 +237,6 @@ driver = webdriver.Chrome(chrome_options=chrome_options)
 
 # Pre-load a website to get past initial start-up erros
 driver.get(websiteURL);
-
-
 
 print ("\n\n *** Searching now (%s) ***\n\n" % (websiteURL))
 #websiteURL="http://jnjprod.service-now.com/iris_gl"
