@@ -38,16 +38,15 @@ def lookForText():
 
 # ------------------------------------------------------------------------------
 
-def findAllCatalogItems():
+def printAllCatalogItems(browser):
 
 	# Purely additional info, search for all catalog items
 	try: 
 		xPathDesired = "//a[contains(@href, '?id=iris_cat_item')]"
-		desiredList = driver.find_elements_by_xpath(xPathDesired);
+		desiredList = browser.find_elements_by_xpath(xPathDesired);
 	except:
 		print "Failed to find list"
 	else:
-		count = 1;
 		for count,element in enumerate(desiredList):
 			print("   (%2d) %s" % (count+1, printable(element.text)));
 			# vprint("        INNER: %s\n" % (printable(element.get_attribute('innerHTML'))))
@@ -102,7 +101,7 @@ def searchInIrisServicePortal(browser, currentCount, totalCount, websiteURL, sea
 	vprint ("   Catalog URL = %s\n" % (catURL))
 	vprint ("   xPath = %s\n" % (xPathDesired))
 
-	# findAllCatalogItems();
+	printAllCatalogItems(browser);
 
 # ------------------------------------------------------------------------------
 
