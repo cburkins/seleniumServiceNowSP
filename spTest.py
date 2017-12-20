@@ -10,7 +10,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
-
+import time
 
 
 # ------------------------------------------------------------------------------
@@ -70,6 +70,7 @@ def searchInIrisServicePortal(websiteURL, search_string, catalogSysId, itemTitle
 	sys.stdout.write("Searching %-37s" % ("'" + search_string + "' :"))
 	elem.clear()
 	elem.send_keys(search_string);
+	time.sleep(pauseDuration);
 	elem.send_keys(Keys.RETURN);
 
 	#lookForText();
@@ -81,6 +82,7 @@ def searchInIrisServicePortal(websiteURL, search_string, catalogSysId, itemTitle
 	wait = WebDriverWait(driver, 20)
 	xPathDesired="//h4[contains(text(),'Search results for:')]"
 	wait.until(EC.visibility_of_element_located((By.XPATH, xPathDesired)))
+	time.sleep(pauseDuration);
 
 	# Construct correct XPath to find the desired catalog item on the page
 	catURL = '?id=iris_cat_item&sys_id=%s' % (catalogSysId)
@@ -175,14 +177,22 @@ import argparse
 # epilog= argument will be display last in help usage (strips out newlines)
 parser = argparse.ArgumentParser(description='Does search testing on Iris (ServiceNow) website')
  
-# Test for verbose flag
+# Configure command-line flag for verbose output
 parser.add_argument('-v', dest='verbose', action='store_true', help='verbose_mode')
-# Query for string 
+# Configure command-line flag for a silly message, just so I remember how to do it 
 parser.add_argument('--message',  default="Well, Hi there, Chad !")
+# Configure command-line flag selecting a pause duration
+parser.add_argument('-p', type=int, help='amount to pause selenium tester', default=1)
+# Configure command-line flag selecting a website
+parser.add_argument('-w', default="http://jnjtrain.service-now.com/iris_gl", help='ServiceNow website to test against')
 
 # Get the object returned by parse_args
 args = parser.parse_args()
 verbose = args.verbose;
+pauseDuration = args.p;
+websiteURL = args.w;
+# websiteURL="http://jnjsandbox5.service-now.com/iris_gl"
+# websiteURL="http://jnjtrain.service-now.com/iris_gl"
  
 # Prints command-line params
 vprint("\nGiven arguments: %s\n\n" % (sys.argv[1:]))
@@ -195,17 +205,26 @@ vprint("\n\n");
 #searchListDefault = readDefaultSearchList();
 searchList = readSearchConfig();
 
+# Show the user the desired website
+print("\nWebsite URL: %s\n\n" % (websiteURL));
+
+# Verify that the user is ready ('y' is the only answer that will proceed)
+response = raw_input("\nReady to go ? ")
+if (response != 'y'):
+	print ("\n*** Exiting ***\n\n");
+	sys.exit();
+
 # Open the browser
 chrome_options = Options()
 #chrome_options.add_argument("start-maximized")
 #chrome_options.add_argument("headless")
+# Option to supress errors such as "[8916:7132:1219/182838.145:ERROR:process_metrics.cc(105)] NOT IMPLEMENTED"
+chrome_options.add_argument("--log-level=3")
 print ("\n *** Opening browser ***\n")
 driver = webdriver.Chrome(chrome_options=chrome_options)
-#driver = webdriver.Chrome()
+
 
 # Pre-load a website to get past initial start-up erros
-websiteURL="http://jnjsandbox5.service-now.com/iris_gl"
-websiteURL="http://jnjtrain.service-now.com/iris_gl"
 driver.get(websiteURL);
 
 
