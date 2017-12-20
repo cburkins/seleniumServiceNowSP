@@ -56,15 +56,15 @@ def findAllCatalogItems():
 
 # ------------------------------------------------------------------------------
 
-def searchInIrisServicePortal(currentCount, totalCount, websiteURL, search_string, catalogSysId, itemTitle):
+def searchInIrisServicePortal(browser, currentCount, totalCount, websiteURL, search_string, catalogSysId, itemTitle):
 
 	# Load the desired website
-	driver.get(websiteURL);
-	driver.implicitly_wait(10) # seconds
+	browser.get(websiteURL);
+	browser.implicitly_wait(10) # seconds
 
 
 	# Wait for the search box to show up
-	elem = driver.find_element_by_xpath("//*[@id='homepage-search']/div/div[1]/div[2]/form/div/input");
+	elem = browser.find_element_by_xpath("//*[@id='homepage-search']/div/div[1]/div[2]/form/div/input");
 
 	# Type in the search string
 	sys.stdout.write("(%03d/%03d) Searching %-37s" % (currentCount, totalCount, "'" + search_string + "' :"))
@@ -76,10 +76,10 @@ def searchInIrisServicePortal(currentCount, totalCount, websiteURL, search_strin
 	#lookForText();
 
 	# Assert the New Hire catalog item is within the search results
-	#desiredLink = driver.find_element_by_xpath("//a[contains(@href,'?id=iris_cat_item&sys_id=3e94804b6f88ad041e02e3764b3ee4cf')]");
+	#desiredLink = browser.find_element_by_xpath("//a[contains(@href,'?id=iris_cat_item&sys_id=3e94804b6f88ad041e02e3764b3ee4cf')]");
 
 	# Wait for search results
-	wait = WebDriverWait(driver, 20)
+	wait = WebDriverWait(browser, 20)
 	xPathDesired="//h4[contains(text(),'Search results for:')]"
 	wait.until(EC.visibility_of_element_located((By.XPATH, xPathDesired)))
 	time.sleep(pauseDuration);
@@ -89,14 +89,14 @@ def searchInIrisServicePortal(currentCount, totalCount, websiteURL, search_strin
 	xPathDesired = "//a[contains(@href,'%s')]" % (catURL)
 
 	# Attempting explict wait
-	driver.implicitly_wait(0) # seconds
-	wait = WebDriverWait(driver, 2)
+	browser.implicitly_wait(0) # seconds
+	wait = WebDriverWait(browser, 2)
 	try:
 		wait.until(EC.visibility_of_element_located((By.XPATH, xPathDesired)))
 	except:
 		print ("Failed (%s)" % (itemTitle));
 	else:
-		desiredLink = driver.find_element_by_xpath(xPathDesired);
+		desiredLink = browser.find_element_by_xpath(xPathDesired);
 		print("Found  (Catalog Item: %s)" % (printable(desiredLink.text)));
 	vprint ("   Catalog URL = %s\n" % (catURL))
 	vprint ("   xPath = %s\n" % (xPathDesired))
@@ -229,6 +229,25 @@ def getConfirmation(theQuestion):
 		sys.exit();
 
 # ------------------------------------------------------------------------------
+
+def openBrowser():
+	chrome_options = Options()
+	#chrome_options.add_argument("start-maximized")
+	#chrome_options.add_argument("headless")
+	# Option to supress errors such as "[8916:7132:1219/182838.145:ERROR:process_metrics.cc(105)] NOT IMPLEMENTED"
+	chrome_options.add_argument("--log-level=3")
+	print ("\n *** Opening browser ***\n")
+	browser = webdriver.Chrome(chrome_options=chrome_options)
+	return browser;
+
+
+# ------------------------------------------------------------------------------
+
+def closeBroswer(browser):
+	print "\n\nAll finished, closing the browser now..."
+	browser.close();
+
+# ------------------------------------------------------------------------------
 # --------------------------- Main ---------------------------------------------
 # ------------------------------------------------------------------------------
 
@@ -248,16 +267,12 @@ printParams();
 getConfirmation("\nReady to go ? ");
 
 # Open the browser
-chrome_options = Options()
-#chrome_options.add_argument("start-maximized")
-#chrome_options.add_argument("headless")
-# Option to supress errors such as "[8916:7132:1219/182838.145:ERROR:process_metrics.cc(105)] NOT IMPLEMENTED"
-chrome_options.add_argument("--log-level=3")
-print ("\n *** Opening browser ***\n")
-driver = webdriver.Chrome(chrome_options=chrome_options)
+
+browser = openBrowser();
 
 # Pre-load a website to get past initial start-up erros
-driver.get(websiteURL);
+
+browser.get(websiteURL);
 
 print ("\n\n *** Searching now (%s) ***\n\n" % (websiteURL))
 #websiteURL="http://jnjprod.service-now.com/iris_gl"
@@ -265,11 +280,9 @@ print ("\n\n *** Searching now (%s) ***\n\n" % (websiteURL))
 # Loop through all the desired tests, and call the test function
 for (count,row) in enumerate(searchList):
 	# print ("term=%-20s sys_id=%-40s title=%s" % (row[0], row[1], row[2]))
-	searchInIrisServicePortal(count+1, len(searchList), websiteURL, row[0], row[1], row[2]);
+	searchInIrisServicePortal(browser, count+1, len(searchList), websiteURL, row[0], row[1], row[2]);
 
-print "\n\nAll finished, closing the browser now..."
-driver.close();
-
+closeBroswer(browser);
 
 # ------------------------------------------------------------------------------
 # ------------------------------ End -------------------------------------------
