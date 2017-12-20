@@ -78,18 +78,19 @@ def searchInIrisServicePortal(browser, currentCount, totalCount, websiteURL, sea
 	# Assert the New Hire catalog item is within the search results
 	#desiredLink = browser.find_element_by_xpath("//a[contains(@href,'?id=iris_cat_item&sys_id=3e94804b6f88ad041e02e3764b3ee4cf')]");
 
-	# Wait for search results
+	# Explicity Wait for search results to show up on screen
 	wait = WebDriverWait(browser, 20)
 	xPathDesired="//h4[contains(text(),'Search results for:')]"
 	wait.until(EC.visibility_of_element_located((By.XPATH, xPathDesired)))
 	time.sleep(pauseDuration);
 
+	# Explicitly wait until we find the specific search result we want
 	# Construct correct XPath to find the desired catalog item on the page
 	catURL = '?id=iris_cat_item&sys_id=%s' % (catalogSysId)
 	xPathDesired = "//a[contains(@href,'%s')]" % (catURL)
-
-	# Attempting explict wait
+	# Make sure that implicit wait is zero, else it seems to override the explict wait
 	browser.implicitly_wait(0) # seconds
+	# Set explicity wait for 2 seconds
 	wait = WebDriverWait(browser, 2)
 	try:
 		wait.until(EC.visibility_of_element_located((By.XPATH, xPathDesired)))
@@ -206,9 +207,7 @@ def getCommandLineArgs():
 		vprint ("   %s: %s\n" % (cmdlineOption, vars(args)[cmdlineOption]))
 	vprint("\n\n");
 
-
 	return [verbose, pauseDuration, websiteURL, searchConfigFile];
-
 
 # ------------------------------------------------------------------------------
 
@@ -251,7 +250,6 @@ def closeBroswer(browser):
 # --------------------------- Main ---------------------------------------------
 # ------------------------------------------------------------------------------
 
-
 # Get the command-line args that were passed in (as well as defaults for no args)
 verbose = False;
 [verbose, pauseDuration, websiteURL, searchConfigFile] = getCommandLineArgs();
@@ -267,17 +265,10 @@ printParams();
 getConfirmation("\nReady to go ? ");
 
 # Open the browser
-
 browser = openBrowser();
 
-# Pre-load a website to get past initial start-up erros
-
-browser.get(websiteURL);
-
-print ("\n\n *** Searching now (%s) ***\n\n" % (websiteURL))
-#websiteURL="http://jnjprod.service-now.com/iris_gl"
-
 # Loop through all the desired tests, and call the test function
+print ("\n\n *** Searching now (%s) ***\n\n" % (websiteURL))
 for (count,row) in enumerate(searchList):
 	# print ("term=%-20s sys_id=%-40s title=%s" % (row[0], row[1], row[2]))
 	searchInIrisServicePortal(browser, count+1, len(searchList), websiteURL, row[0], row[1], row[2]);
@@ -287,5 +278,3 @@ closeBroswer(browser);
 # ------------------------------------------------------------------------------
 # ------------------------------ End -------------------------------------------
 # ------------------------------------------------------------------------------
-
-
