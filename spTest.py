@@ -164,66 +164,88 @@ def readDefaultSearchList():
 	]
 	return searchListDefault
 
+# ------------------------------------------------------------------------------
+
+def getCommandLineArgs():
+
+	verbose = False
+
+	import getpass
+	import argparse
+	 
+	# Parse command-line arguments (Create ArgumentParser object)
+	# By default, program name (shown in 'help' function) will be the same as the name of this file
+	# Program name either comes from sys.argv[0] (invocation of this program) or from prog= argument to ArgumentParser
+	# epilog= argument will be display last in help usage (strips out newlines)
+	parser = argparse.ArgumentParser(description='Does search testing on Iris (ServiceNow) website')
+	 
+	# Configure command-line flag for verbose output
+	parser.add_argument('-v', dest='verbose', action='store_true', help='verbose_mode')
+	# Configure command-line flag for a silly message, just so I remember how to do it 
+	parser.add_argument('--message',  default="Well, Hi there, Chad !")
+	# Configure command-line flag selecting a pause duration
+	parser.add_argument('-p', type=int, help='amount to pause selenium tester', default=1)
+	# Configure command-line flag selecting a website
+	parser.add_argument('-w', default="http://jnjtrain.service-now.com/iris_gl", help='ServiceNow website to test against')
+	# Configure command-line flag selecting a configuration file (for search terms)
+	parser.add_argument('-s', default="SearchMonitoringCriteria2.csv", help='list of search terms to run (in CSV format with one header row)')
+
+	# Get the object returned by parse_args
+	args = parser.parse_args()
+	verbose = args.verbose;
+	pauseDuration = args.p;
+	websiteURL = args.w;
+	searchConfigFile = args.s;
+	# websiteURL="http://jnjsandbox5.service-now.com/iris_gl"
+	# websiteURL="http://jnjtrain.service-now.com/iris_gl"
+	 
+	# Prints command-line params
+	vprint("\nGiven arguments: %s\n\n" % (sys.argv[1:]))
+	vprint("Interpreted arguments: (via argparse object)\n")
+	for cmdlineOption in (vars(args)):
+		vprint ("   %s: %s\n" % (cmdlineOption, vars(args)[cmdlineOption]))
+	vprint("\n\n");
+
+
+	return [verbose, pauseDuration, websiteURL, searchConfigFile];
+
+
+# ------------------------------------------------------------------------------
+
+def printParams():
+	print("\n");
+	print("%20s: %s" % ("Website URL", websiteURL));
+	print("%20s: %s" % ("configFile", searchConfigFile))
+	print("%20s: %s" % ("Pause Duration", pauseDuration))
+	print("%20s: %d" % ("Number of tests", len(searchList)))
+	print("\n\n");
+
+
+# ------------------------------------------------------------------------------
+def getConfirmation(theQuestion):
+	response = raw_input(theQuestion)
+	if (response != 'y'):
+		print ("\n*** Exiting ***\n\n");
+		sys.exit();
+
+# ------------------------------------------------------------------------------
 # --------------------------- Main ---------------------------------------------
 # ------------------------------------------------------------------------------
 
 
-verbose = False
-
-import getpass
-import argparse
- 
-# Parse command-line arguments (Create ArgumentParser object)
-# By default, program name (shown in 'help' function) will be the same as the name of this file
-# Program name either comes from sys.argv[0] (invocation of this program) or from prog= argument to ArgumentParser
-# epilog= argument will be display last in help usage (strips out newlines)
-parser = argparse.ArgumentParser(description='Does search testing on Iris (ServiceNow) website')
- 
-# Configure command-line flag for verbose output
-parser.add_argument('-v', dest='verbose', action='store_true', help='verbose_mode')
-# Configure command-line flag for a silly message, just so I remember how to do it 
-parser.add_argument('--message',  default="Well, Hi there, Chad !")
-# Configure command-line flag selecting a pause duration
-parser.add_argument('-p', type=int, help='amount to pause selenium tester', default=1)
-# Configure command-line flag selecting a website
-parser.add_argument('-w', default="http://jnjtrain.service-now.com/iris_gl", help='ServiceNow website to test against')
-# Configure command-line flag selecting a configuration file (for search terms)
-parser.add_argument('-s', default="SearchMonitoringCriteria2.csv", help='list of search terms to run (in CSV format with one header row)')
-
-# Get the object returned by parse_args
-args = parser.parse_args()
-verbose = args.verbose;
-pauseDuration = args.p;
-websiteURL = args.w;
-searchConfigFile = args.s;
-# websiteURL="http://jnjsandbox5.service-now.com/iris_gl"
-# websiteURL="http://jnjtrain.service-now.com/iris_gl"
- 
-# Prints command-line params
-vprint("\nGiven arguments: %s\n\n" % (sys.argv[1:]))
-vprint("Interpreted arguments: (via argparse object)\n")
-for cmdlineOption in (vars(args)):
-	vprint ("   %s: %s\n" % (cmdlineOption, vars(args)[cmdlineOption]))
-vprint("\n\n");
+# Get the command-line args that were passed in (as well as defaults for no args)
+verbose = False;
+[verbose, pauseDuration, websiteURL, searchConfigFile] = getCommandLineArgs();
 
 # Get the search terms
 #searchListDefault = readDefaultSearchList();
 searchList = readSearchConfig(searchConfigFile);
 
 # Show the user all the parameters
-print("\n");
-print("%20s: %s" % ("Website URL", websiteURL));
-print("%20s: %s" % ("configFile", searchConfigFile))
-print("%20s: %s" % ("Pause Duration", pauseDuration))
-print("%20s: %d" % ("Number of tests", len(searchList)))
+printParams();
 
-print("\n\n");
-
-# Verify that the user is ready ('y' is the only answer that will proceed)
-response = raw_input("\nReady to go ? ")
-if (response != 'y'):
-	print ("\n*** Exiting ***\n\n");
-	sys.exit();
+# If the user doesn't answer 'y', program will exit
+getConfirmation("\nReady to go ? ");
 
 # Open the browser
 chrome_options = Options()
@@ -234,23 +256,16 @@ chrome_options.add_argument("--log-level=3")
 print ("\n *** Opening browser ***\n")
 driver = webdriver.Chrome(chrome_options=chrome_options)
 
-
 # Pre-load a website to get past initial start-up erros
 driver.get(websiteURL);
 
 print ("\n\n *** Searching now (%s) ***\n\n" % (websiteURL))
 #websiteURL="http://jnjprod.service-now.com/iris_gl"
 
-# # Loop through all desired searches, and search for each
-# for searchConfig in searchList:
-# 	searchInIrisServicePortal(websiteURL, searchConfig[0], searchConfig[1], searchConfig[2]);
-
-
+# Loop through all the desired tests, and call the test function
 for (count,row) in enumerate(searchList):
 	# print ("term=%-20s sys_id=%-40s title=%s" % (row[0], row[1], row[2]))
 	searchInIrisServicePortal(count+1, len(searchList), websiteURL, row[0], row[1], row[2]);
-	
-
 
 print "\n\nAll finished, closing the browser now..."
 driver.close();
