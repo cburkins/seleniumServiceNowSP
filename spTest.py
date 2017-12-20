@@ -56,7 +56,7 @@ def findAllCatalogItems():
 
 # ------------------------------------------------------------------------------
 
-def searchInIrisServicePortal(websiteURL, search_string, catalogSysId, itemTitle):
+def searchInIrisServicePortal(currentCount, totalCount, websiteURL, search_string, catalogSysId, itemTitle):
 
 	# Load the desired website
 	driver.get(websiteURL);
@@ -67,7 +67,7 @@ def searchInIrisServicePortal(websiteURL, search_string, catalogSysId, itemTitle
 	elem = driver.find_element_by_xpath("//*[@id='homepage-search']/div/div[1]/div[2]/form/div/input");
 
 	# Type in the search string
-	sys.stdout.write("Searching %-37s" % ("'" + search_string + "' :"))
+	sys.stdout.write("(%03d/%03d) Searching %-37s" % (currentCount, totalCount, "'" + search_string + "' :"))
 	elem.clear()
 	elem.send_keys(search_string);
 	time.sleep(pauseDuration);
@@ -246,9 +246,9 @@ print ("\n\n *** Searching now (%s) ***\n\n" % (websiteURL))
 # 	searchInIrisServicePortal(websiteURL, searchConfig[0], searchConfig[1], searchConfig[2]);
 
 
-for row in searchList:
+for (count,row) in enumerate(searchList):
 	# print ("term=%-20s sys_id=%-40s title=%s" % (row[0], row[1], row[2]))
-	searchInIrisServicePortal(websiteURL, row[0], row[1], row[2]);
+	searchInIrisServicePortal(count+1, len(searchList), websiteURL, row[0], row[1], row[2]);
 	
 
 
