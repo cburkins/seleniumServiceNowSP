@@ -40,11 +40,10 @@ def lookForText():
 
 # ------------------------------------------------------------------------------
 
-def printAllCatalogItems(browser):
+def printListXPath(xpathExpression, browser):
 
-	# Purely additional info, search for all catalog items
+	xPathDesired = xpathExpression;
 	try: 
-		xPathDesired = "//a[contains(@href, '?id=iris_cat_item')]"
 		desiredList = browser.find_elements_by_xpath(xPathDesired);
 	except:
 		print "Failed to find list"
@@ -55,6 +54,12 @@ def printAllCatalogItems(browser):
 			# vprint("        OUTER: %s\n" % (printable(element.get_attribute('outerHTML'))))
 			vprint("        HREF:  %s\n" % (printable(element.get_attribute('href'))))
 
+# Create three new (simpler) functions.  1st argument is a complex XPath expression
+# These three new functions take 1 argument rather than 2, and have that 1st argument (XPath) hard-coded
+printCatalogResults = lambda browser: printListXPath("//a[contains(@href, '?id=iris_cat_item')]", browser)
+printKnowledgeResults = lambda browser: printListXPath("//a[contains(@href, 'kb_article')]", browser)
+printAllResults = lambda browser: printListXPath("//a[contains(@href, 'kb_article') or contains(@href, 'id=iris_cat_item')]", browser)
+
 # ------------------------------------------------------------------------------
 def index_containing_substring(the_list, substring):
     for i, s in enumerate(the_list):
@@ -63,10 +68,16 @@ def index_containing_substring(the_list, substring):
     return -1
 # ------------------------------------------------------------------------------
 
-def findInList(browser, sys_id):
+def findInElementList(xpathExpression, browser, sys_id):
 
-	# Purely additional info, search for all catalog items
-	xPathDesired = "//a[contains(@href, '?id=iris_cat_item')]"
+	# XPath to find all catalog items in the search results
+	# xPathDesired = "//a[contains(@href, '?id=iris_cat_item')]"
+	# Xpath to find all knowledge articles in the search results
+	# xPathDesired = "//a[contains(@href, 'kb_article')]"
+	# XPath to find all the search result links (both articles and catalog items)
+	xPathDesired = "//a[contains(@href, 'kb_article') or contains(@href, 'id=iris_cat_item')]"
+	xPathDesired = xpathExpression
+
 	try: 
 		desiredList = WebDriverWait(browser, 2).until(lambda browser:browser.find_elements_by_xpath(xPathDesired))
 	except:
@@ -74,15 +85,20 @@ def findInList(browser, sys_id):
 	else:
 		listSys_Id = [];
 		for count,element in enumerate(desiredList):
-			print("   (%2d) %s" % (count+1, printable(element.text)));
+			vprint("   (%2d) %s\n" % (count+1, printable(element.text)));
 			# vprint("        INNER: %s\n" % (printable(element.get_attribute('innerHTML'))))
 			# vprint("        OUTER: %s\n" % (printable(element.get_attribute('outerHTML'))))
 			vprint("        HREF:  %s\n" % (printable(element.get_attribute('href'))))
 			listSys_Id.append(printable(element.get_attribute('href')))
 		position = index_containing_substring(listSys_Id, sys_id)+1	
-		print("   Position:%d" % (position))
+		vprint("   Position:%d" % (position))
+		return [position, len(desiredList)]
 
-
+# Create three new (simpler) functions.  1st argument is a complex XPath expression
+# These three new functions take 2 arguments rather than 3, and have that 1st argument (XPath) hard-coded
+positionInCatalogResults = lambda browser,catalogSysId: findInElementList("//a[contains(@href, '?id=iris_cat_item')]", browser, catalogSysId)
+positionInKnowledgeResults = lambda browser,catalogSysId: findInElementList("//a[contains(@href, 'kb_article')]", browser, catalogSysId)
+positionInAllResults = lambda browser,catalogSysId: findInElementList("//a[contains(@href, 'kb_article') or contains(@href, 'id=iris_cat_item')]", browser, catalogSysId)
 
 # ------------------------------------------------------------------------------
 
@@ -125,17 +141,16 @@ def searchInIrisServicePortal(browser, currentCount, totalCount, websiteURL, sea
 	try:
 		wait.until(EC.visibility_of_element_located((By.XPATH, xPathDesired)))
 	except:
-		print ("Failed (%s)" % (itemTitle));
+		print ("Failed                     (%s)" % (itemTitle));
 	else:
 		desiredLink = browser.find_element_by_xpath(xPathDesired);
-		print("Found  (Catalog Item: %s)" % (printable(desiredLink.text)));
+		[position, numResults] = positionInAllResults(browser, catalogSysId);
+		print("Found  [position %2d of %2d] (Catalog Item: %s)" % (position, numResults, printable(desiredLink.text)));
 	vprint ("   Catalog URL = %s\n" % (catURL))
 	vprint ("   xPath = %s\n" % (xPathDesired))
 
+	printAllResults(browser);
 
-
-	printAllCatalogItems(browser);
-	findInList(browser, catalogSysId);
 
 # ------------------------------------------------------------------------------
 
