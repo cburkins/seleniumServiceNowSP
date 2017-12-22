@@ -14,7 +14,44 @@ from selenium.webdriver.support import expected_conditions as EC
 import time
 
 
+# ------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
+# Leveraged this:   http://blog.mathieu-leplatre.info/colored-output-in-console-with-python.html
+# ------------------------------------------------------------------------------
+BLACK, RED, GREEN, YELLOW, BLUE, MAGENTA, CYAN, WHITE = range(8)
+# ------------------------------------------------------------------------------
 
+#following from Python cookbook, #475186
+def has_colours(stream):
+    if not hasattr(stream, "isatty"):
+        return False
+    if not stream.isatty():
+        return False # auto color only on TTYs
+    try:
+        import curses
+        curses.setupterm()
+        return curses.tigetnum("colors") > 2
+    except:
+        # guess false in case of error
+        return False
+has_colours = has_colours(sys.stdout)
+# ------------------------------------------------------------------------------
+def printout(text, colour=WHITE):
+        if has_colours:
+                seq = "\x1b[1;%dm" % (30+colour) + text + "\x1b[0m"
+                sys.stdout.write(seq)
+        else:
+                sys.stdout.write(text)
+# ------------------------------------------------------------------------------
+def getColorString(text, colour=WHITE):
+        if has_colours:
+                seq = "\x1b[1;%dm" % (30+colour) + text + "\x1b[0m"
+                return(seq)
+        else:
+                return(text)
+# ------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 # ------------------------------------------------------------------------------
 
 def vprint(print_me):
@@ -22,6 +59,7 @@ def vprint(print_me):
     if verbose:
         #print "%s" % print_me
         sys.stdout.write("%s" % print_me)
+        sys.stdout.flush();
 
 # ------------------------------------------------------------------------------
 def printable(theString):
@@ -114,6 +152,7 @@ def searchInIrisServicePortal(browser, currentCount, totalCount, websiteURL, sea
 
 	# Type in the search string
 	sys.stdout.write("(%03d/%03d) Searching %-37s" % (currentCount, totalCount, "'" + search_string + "' :"))
+	sys.stdout.flush();
 	elem.clear()
 	elem.send_keys(search_string);
 	time.sleep(pauseDuration);
@@ -141,15 +180,16 @@ def searchInIrisServicePortal(browser, currentCount, totalCount, websiteURL, sea
 	try:
 		wait.until(EC.visibility_of_element_located((By.XPATH, xPathDesired)))
 	except:
-		print ("Failed                     (%s)" % (itemTitle));
+		print ("%s                     (%s)" % (getColorString("FAILED", RED), itemTitle));
 	else:
 		desiredLink = browser.find_element_by_xpath(xPathDesired);
 		[position, numResults] = positionInAllResults(browser, catalogSysId);
-		print("Found  [position %2d of %2d] (Catalog Item: %s)" % (position, numResults, printable(desiredLink.text)));
+		print("%s  [position %2d of %2d] (Catalog Item: %s)" % (getColorString("Found", GREEN), position, numResults, printable(desiredLink.text)));
 	vprint ("   Catalog URL = %s\n" % (catURL))
 	vprint ("   xPath = %s\n" % (xPathDesired))
 
-	printAllResults(browser);
+	if printSearchResults:
+		printAllResults(browser);
 
 
 # ------------------------------------------------------------------------------
@@ -230,6 +270,8 @@ def getCommandLineArgs():
 	 
 	# Configure command-line flag for verbose output
 	parser.add_argument('-v', dest='verbose', action='store_true', help='verbose_mode')
+	# Configure command-line flag for results output
+	parser.add_argument('-r', dest='results', action='store_true', help='print search results')
 	# Configure command-line flag for a silly message, just so I remember how to do it 
 	parser.add_argument('--message',  default="Well, Hi there, Chad !")
 	# Configure command-line flag selecting a pause duration
@@ -245,6 +287,7 @@ def getCommandLineArgs():
 	pauseDuration = args.p;
 	websiteURL = args.w;
 	searchConfigFile = args.s;
+	printSearchResults = args.results;
 	# websiteURL="http://jnjsandbox5.service-now.com/iris_gl"
 	# websiteURL="http://jnjtrain.service-now.com/iris_gl"
 	 
@@ -255,7 +298,7 @@ def getCommandLineArgs():
 		vprint ("   %s: %s\n" % (cmdlineOption, vars(args)[cmdlineOption]))
 	vprint("\n\n");
 
-	return [verbose, pauseDuration, websiteURL, searchConfigFile];
+	return [verbose, printSearchResults, pauseDuration, websiteURL, searchConfigFile];
 
 # ------------------------------------------------------------------------------
 
@@ -265,6 +308,8 @@ def printParams():
 	print("%20s: %s" % ("configFile", searchConfigFile))
 	print("%20s: %s" % ("Pause Duration", pauseDuration))
 	print("%20s: %d" % ("Number of tests", len(searchList)))
+	print("%20s: %s" % ("Print Search Results", printSearchResults))
+	print("%20s: %s" % ("Verbose", verbose))
 	print("\n\n");
 
 
@@ -279,7 +324,10 @@ def getConfirmation(theQuestion):
 
 def openBrowser():
 	chrome_options = Options()
+
+	# I think  you can also use browser.maximize_window(), perhaps browser agnostic ?
 	#chrome_options.add_argument("start-maximized")
+
 	#chrome_options.add_argument("headless")
 	# Option to supress errors such as "[8916:7132:1219/182838.145:ERROR:process_metrics.cc(105)] NOT IMPLEMENTED"
 	chrome_options.add_argument("--log-level=3")
@@ -300,7 +348,7 @@ def closeBroswer(browser):
 
 # Get the command-line args that were passed in (as well as defaults for no args)
 verbose = False;
-[verbose, pauseDuration, websiteURL, searchConfigFile] = getCommandLineArgs();
+[verbose, printSearchResults, pauseDuration, websiteURL, searchConfigFile] = getCommandLineArgs();
 
 # Get the search terms
 #searchListDefault = readDefaultSearchList();
