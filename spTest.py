@@ -279,6 +279,8 @@ def getCommandLineArgs():
 	# Parse command-line arguments (Create ArgumentParser object)
 	# By default, program name (shown in 'help' function) will be the same as the name of this file
 	# Program name either comes from sys.argv[0] (invocation of this program) or from prog= argument to ArgumentParser
+	# If the nargs keyword argument is not provided, the number of arguments consumed is determined by the action.
+	#    store_true: 
 	# epilog= argument will be display last in help usage (strips out newlines)
 	parser = argparse.ArgumentParser(description='Does search testing on Iris (ServiceNow) website')
 	 
@@ -286,21 +288,19 @@ def getCommandLineArgs():
 	parser.add_argument('-v', dest='verbose', action='store_true', help='verbose_mode')
 	# Configure command-line flag for results output
 	parser.add_argument('-r', dest='results', action='store_true', help='print search results')
-	# Configure command-line flag for a silly message, just so I remember how to do it 
-	parser.add_argument('--message',  default="Well, Hi there, Chad !")
 	# Configure command-line flag selecting a pause duration
-	parser.add_argument('-p', type=int, help='amount to pause selenium tester', default=1)
+	parser.add_argument('-p', type=int, dest="pauseSecs", help='amount to pause selenium tester', default=1)
 	# Configure command-line flag selecting a website
-	parser.add_argument('-w', default="http://jnjtrain.service-now.com/iris_gl", help='ServiceNow website to test against')
+	parser.add_argument('-w', type=str, dest="websiteURL", action="store", default="http://jnjtrain.service-now.com/iris_gl", help='ServiceNow website to test against')
 	# Configure command-line flag selecting a configuration file (for search terms)
-	parser.add_argument('-s', default="SearchMonitoringCriteria2.csv", help='list of search terms to run (in CSV format with one header row)')
+	parser.add_argument('-s', type=str, dest="inputFile", default="SearchMonitoringCriteria2.csv", help='list of search terms to run (in CSV format with one header row)')
 
 	# Get the object returned by parse_args
 	args = parser.parse_args()
 	verbose = args.verbose;
-	pauseDuration = args.p;
-	websiteURL = args.w;
-	searchConfigFile = args.s;
+	pauseDuration = args.pauseSecs;
+	websiteURL = args.websiteURL;
+	searchConfigFile = args.inputFile;
 	printSearchResults = args.results;
 	# websiteURL="http://jnjsandbox5.service-now.com/iris_gl"
 	# websiteURL="http://jnjtrain.service-now.com/iris_gl"
