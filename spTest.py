@@ -366,7 +366,6 @@ browser = openBrowser();
 # Loop through all the desired tests, and call the test function
 print ("\n\n *** Searching now (%s) ***\n\n" % (websiteURL))
 for (count,row) in enumerate(searchList):
-	# print ("term=%-20s sys_id=%-40s title=%s" % (row[0], row[1], row[2]))
 	searchInIrisServicePortal(browser, count+1, len(searchList), websiteURL, row[0], row[1], row[2]);
 
 closeBroswer(browser);
