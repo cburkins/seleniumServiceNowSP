@@ -79,5 +79,5 @@ c21f80036f4865c038ef17831c3ee4b1,Modify email/account name/change field/VIP stat
 
 ### Screenshots
 
-![alt text](screenshots/example-output-cygwin-withborder.png "Screenshot of colored output using cygwin")
+![alt text](screenshots/example-outout-cygwin-withborder.png "Screenshot of colored output using cygwin")
 
