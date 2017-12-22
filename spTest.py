@@ -144,10 +144,17 @@ def truncateAddEllipse(inputString, desiredLength):
 		return inputString[:desiredLength-3] + "..."
 	else:
 		return inputString
-
+# ------------------------------------------------------------------------------
+def getResultType(element):
+	if ('id=iris_cat_item' in element.get_attribute('href')):
+		return "Catalog"
+	elif ('kb_article' in element.get_attribute('href')):
+		return getColorString("Article",CYAN);
+	else:
+		return "Unknown Type"
 # ------------------------------------------------------------------------------
 
-def searchInIrisServicePortal(browser, currentCount, totalCount, websiteURL, search_string, catalogSysId, itemTitle):
+def searchInIrisServicePortal(browser, currentCount, totalCount, websiteURL, search_string, sys_id, itemTitle):
 
 	# Load the desired website
 	browser.get(websiteURL);
@@ -178,8 +185,7 @@ def searchInIrisServicePortal(browser, currentCount, totalCount, websiteURL, sea
 
 	# Explicitly wait until we find the specific search result we want
 	# Construct correct XPath to find the desired catalog item on the page
-	catURL = '?id=iris_cat_item&sys_id=%s' % (catalogSysId)
-	xPathDesired = "//a[contains(@href,'%s')]" % (catURL)
+	xPathDesired = "//a[contains(@href,'%s')]" % (sys_id)
 	# Make sure that implicit wait is zero, else it seems to override the explict wait
 	browser.implicitly_wait(0) # seconds
 	# Set explicity wait for 2 seconds
@@ -187,12 +193,13 @@ def searchInIrisServicePortal(browser, currentCount, totalCount, websiteURL, sea
 	try:
 		wait.until(EC.visibility_of_element_located((By.XPATH, xPathDesired)))
 	except:
-		print ("%s                (%s)" % (getColorString("FAIL", RED), itemTitle));
+		print ("%s                (UserTxt: %s)" % (getColorString("FAIL", RED), truncateAddEllipse(itemTitle,30)));
 	else:
 		desiredLink = browser.find_element_by_xpath(xPathDesired);
-		[position, numResults] = positionInAllResults(browser, catalogSysId);
-		print("%s [pos %2d of %2d] (Catalog Item: %s...)" % (getColorString("Pass", GREEN), position, numResults, printable(desiredLink.text)[:30]));
-	vprint ("   Catalog URL = %s\n" % (catURL))
+		[position, numResults] = positionInAllResults(browser, sys_id);
+		resultType = getResultType(desiredLink);
+		urlTitle = truncateAddEllipse(printable(desiredLink.text),30)
+		print("%s [pos %2d of %2d] (%s: %s)" % (getColorString("Pass", GREEN), position, numResults, resultType, urlTitle));
 	vprint ("   xPath = %s\n" % (xPathDesired))
 
 	if printSearchResults:
