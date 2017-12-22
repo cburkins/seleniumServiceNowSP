@@ -16,10 +16,10 @@ This was developed on a Windows 10 machine using chrome.  No testing was done on
 So, your ~/.bashrc should have this at the bottom:
 
 ```
+# Set path for calling command-line executables/scripts
+export PATH=/usr/bin:/usr/local/bin:~/bin
 # Search path for importing python modules
 export PYTHONPATH=/usr/lib/python2.7
-
-export PATH=/usr/bin:/usr/local/bin:~/bin
 ```
 
 
@@ -36,7 +36,7 @@ NOTE: You won't get color output for pass/fail, and copying from the Windows pro
 (finish these instructions later)
 
 
-### Usage
+### Usage (calling the program)
 
 
 Example of usage:
@@ -59,13 +59,15 @@ optional arguments:
                      header row)
 ```
 
-The format of the input file (CSV) is:
+### Usage (format of the input file)
 
-NOTE: Assumes that first line is column headers.  
+The format of the input file (CSV), and assumes that first line is column headers.  
 
 - Column1: sys_id of the item you'd like to find
 - Column2: Friendly name of the catalog item 
 - Column3: text for the search field
+
+Example of intput file
 
 ```
 Sys ID,SID/OG,Search Term
@@ -74,4 +76,8 @@ cb41e2e56f8329001e02e3764b3ee4c1,Suspend IT services for long-term leave,leave
 c21f80036f4865c038ef17831c3ee4b1,Modify email/account name/change field/VIP status,change email address
 c21f80036f4865c038ef17831c3ee4b1,Modify email/account name/change field/VIP status,change account name
 ```
+
+### Screenshots
+
+![alt text](screenshots/example-output-cygwin-withborder.png "Screenshot of colored output using cygwin")
 
