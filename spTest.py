@@ -139,6 +139,13 @@ positionInKnowledgeResults = lambda browser,catalogSysId: findInElementList("//a
 positionInAllResults = lambda browser,catalogSysId: findInElementList("//a[contains(@href, 'kb_article') or contains(@href, 'id=iris_cat_item')]", browser, catalogSysId)
 
 # ------------------------------------------------------------------------------
+def truncateAddEllipse(inputString, desiredLength):
+	if (len(inputString) > (desiredLength-3)):
+		return inputString[:desiredLength-3] + "..."
+	else:
+		return inputString
+
+# ------------------------------------------------------------------------------
 
 def searchInIrisServicePortal(browser, currentCount, totalCount, websiteURL, search_string, catalogSysId, itemTitle):
 
@@ -146,12 +153,12 @@ def searchInIrisServicePortal(browser, currentCount, totalCount, websiteURL, sea
 	browser.get(websiteURL);
 	browser.implicitly_wait(10) # seconds
 
-
 	# Wait for the search box to show up
 	elem = browser.find_element_by_xpath("//*[@id='homepage-search']/div/div[1]/div[2]/form/div/input");
 
 	# Type in the search string
-	sys.stdout.write("(%03d/%03d) Searching %-37s" % (currentCount, totalCount, "'" + search_string + "' :"))
+	#sys.stdout.write("(%03d/%03d) Searching %-37s" % (currentCount, totalCount, "'" + search_string + "' :"))
+	sys.stdout.write("(%03d/%03d) %-40s  Search:%-37s" % (currentCount, totalCount, truncateAddEllipse(itemTitle,40), "'" + search_string + "'"))
 	sys.stdout.flush();
 	elem.clear()
 	elem.send_keys(search_string);
@@ -180,11 +187,11 @@ def searchInIrisServicePortal(browser, currentCount, totalCount, websiteURL, sea
 	try:
 		wait.until(EC.visibility_of_element_located((By.XPATH, xPathDesired)))
 	except:
-		print ("%s                     (%s)" % (getColorString("FAILED", RED), itemTitle));
+		print ("%s                (%s)" % (getColorString("FAIL", RED), itemTitle));
 	else:
 		desiredLink = browser.find_element_by_xpath(xPathDesired);
 		[position, numResults] = positionInAllResults(browser, catalogSysId);
-		print("%s  [position %2d of %2d] (Catalog Item: %s)" % (getColorString("Found", GREEN), position, numResults, printable(desiredLink.text)));
+		print("%s [pos %2d of %2d] (Catalog Item: %s...)" % (getColorString("Pass", GREEN), position, numResults, printable(desiredLink.text)[:30]));
 	vprint ("   Catalog URL = %s\n" % (catURL))
 	vprint ("   xPath = %s\n" % (xPathDesired))
 
