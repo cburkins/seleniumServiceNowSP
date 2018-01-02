@@ -10,7 +10,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
-
+import re
 import time
 
 
@@ -154,53 +154,60 @@ def getResultType(element):
 		return "Unknown Type"
 # ------------------------------------------------------------------------------
 
-def searchInIrisServicePortal(browser, currentCount, totalCount, websiteURL, search_string, sys_id, itemTitle):
-
-	# Load the desired website
-	browser.get(websiteURL);
-	browser.implicitly_wait(10) # seconds
-
-	# Wait for the search box to show up
-	elem = browser.find_element_by_xpath("//*[@id='homepage-search']/div/div[1]/div[2]/form/div/input");
+def searchInIrisServicePortal(browser, currentCount, totalCount, websiteURL, search_string, sys_id, itemTitle, testPriority, priorityMatch):
 
 	# Type in the search string
 	#sys.stdout.write("(%03d/%03d) Searching %-37s" % (currentCount, totalCount, "'" + search_string + "' :"))
-	sys.stdout.write("(%03d/%03d) %-40s  Search:%-37s" % (currentCount, totalCount, truncateAddEllipse(itemTitle,40), "'" + search_string + "'"))
+	sys.stdout.write("(%03d/%03d) %-40s  Search:%-37s %s " % (currentCount, totalCount, truncateAddEllipse(itemTitle,40), "'" + search_string + "'", testPriority))
 	sys.stdout.flush();
-	elem.clear()
-	elem.send_keys(search_string);
-	time.sleep(pauseDuration);
-	elem.send_keys(Keys.RETURN);
 
-	#lookForText();
+	if (re.match(priorityMatch, testPriority) and (testPriority != "Er")):
 
-	# Assert the New Hire catalog item is within the search results
-	#desiredLink = browser.find_element_by_xpath("//a[contains(@href,'?id=iris_cat_item&sys_id=3e94804b6f88ad041e02e3764b3ee4cf')]");
+		# Load the desired website
+		browser.get(websiteURL);
+		browser.implicitly_wait(10) # seconds
 
-	# Explicity Wait for search results to show up on screen
-	wait = WebDriverWait(browser, 20)
-	xPathDesired="//h4[contains(text(),'Search results for:')]"
-	wait.until(EC.visibility_of_element_located((By.XPATH, xPathDesired)))
-	time.sleep(pauseDuration);
+		# Wait for the search box to show up
+		elem = browser.find_element_by_xpath("//*[@id='homepage-search']/div/div[1]/div[2]/form/div/input");
 
-	# Explicitly wait until we find the specific search result we want
-	# Construct correct XPath to find the desired catalog item on the page
-	xPathDesired = "//a[contains(@href,'%s')]" % (sys_id)
-	# Make sure that implicit wait is zero, else it seems to override the explict wait
-	browser.implicitly_wait(0) # seconds
-	# Set explicity wait for 2 seconds
-	wait = WebDriverWait(browser, 2)
-	try:
+
+		# Type desired search into the search field
+		elem.clear()
+		elem.send_keys(search_string);
+		time.sleep(pauseDuration);
+		elem.send_keys(Keys.RETURN);
+
+
+		# Assert the New Hire catalog item is within the search results
+		#desiredLink = browser.find_element_by_xpath("//a[contains(@href,'?id=iris_cat_item&sys_id=3e94804b6f88ad041e02e3764b3ee4cf')]");
+
+		# Explicity Wait for search results to show up on screen
+		wait = WebDriverWait(browser, 20)
+		xPathDesired="//h4[contains(text(),'Search results for:')]"
 		wait.until(EC.visibility_of_element_located((By.XPATH, xPathDesired)))
-	except:
-		print ("%s                (UserTxt: %s)" % (getColorString("FAIL", RED), truncateAddEllipse(itemTitle,30)));
+		time.sleep(pauseDuration);
+
+		# Explicitly wait until we find the specific search result we want
+		# Construct correct XPath to find the desired catalog item on the page
+		xPathDesired = "//a[contains(@href,'%s')]" % (sys_id)
+		# Make sure that implicit wait is zero, else it seems to override the explict wait
+		browser.implicitly_wait(0) # seconds
+		# Set explicity wait for 2 seconds
+		wait = WebDriverWait(browser, 2)
+		try:
+			wait.until(EC.visibility_of_element_located((By.XPATH, xPathDesired)))
+		except:
+			print ("%s                (UserTxt: %s)" % (getColorString("FAIL", RED), truncateAddEllipse(itemTitle,30)));
+		else:
+			desiredLink = browser.find_element_by_xpath(xPathDesired);
+			[position, numResults] = positionInAllResults(browser, sys_id);
+			resultType = getResultType(desiredLink);
+			urlTitle = truncateAddEllipse(printable(desiredLink.text),30)
+			print("%s [pos %2d of %2d] (%s: %s)" % (getColorString("Pass", GREEN), position, numResults, resultType, urlTitle));
+		vprint ("   xPath = %s\n" % (xPathDesired))
+
 	else:
-		desiredLink = browser.find_element_by_xpath(xPathDesired);
-		[position, numResults] = positionInAllResults(browser, sys_id);
-		resultType = getResultType(desiredLink);
-		urlTitle = truncateAddEllipse(printable(desiredLink.text),30)
-		print("%s [pos %2d of %2d] (%s: %s)" % (getColorString("Pass", GREEN), position, numResults, resultType, urlTitle));
-	vprint ("   xPath = %s\n" % (xPathDesired))
+		print("Skip");
 
 	if printSearchResults:
 		printAllResults(browser);
@@ -219,19 +226,25 @@ def readSearchConfig(configFileName):
 		next(searchConfigFile, None);
 		# Loop through all the remaining rows
 		for row in searchConfigFile:
+			vprint("Reading line: %s" % (row))
 			# File is currently sys_id, title, search_term
 			# Create a row where order search_term, sys_sid, title
 			# search_term
 			searchTerm = []
-			searchTerm.append(row[2]);
-			# sys_id
+			# search_term is 4th column
+			searchTerm.append(row[3]);
+			# sys_id is 1st column
 			searchTerm.append(row[0]);
-			# title
+			# title is 3rd column
+			searchTerm.append(row[2]);
+			# priority is 2nd column
 			searchTerm.append(row[1]);
 
 			if (len(searchTerm[1]) == 32):
 				searchList.append(searchTerm);
 			else:
+				searchTerm[3] = "Er"
+				searchList.append(searchTerm);
 				print("Skipping (no catalog sys_id given): %s" % (searchTerm[2]));
 
 	return searchList
@@ -294,6 +307,8 @@ def getCommandLineArgs():
 	parser.add_argument('-w', type=str, dest="websiteURL", action="store", default="http://jnjtrain.service-now.com/iris_gl", help='ServiceNow website to test against')
 	# Configure command-line flag selecting a configuration file (for search terms)
 	parser.add_argument('-s', type=str, dest="inputFile", default="SearchMonitoringCriteria2.csv", help='list of search terms to run (in CSV format with one header row)')
+	# Configure command-line flag providing a priority match string (e.g. P1)
+	parser.add_argument('-priority', type=str, dest="priorityMatch", help='only runs tests which match this express', default=".*")
 
 	# Get the object returned by parse_args
 	args = parser.parse_args()
@@ -302,6 +317,7 @@ def getCommandLineArgs():
 	websiteURL = args.websiteURL;
 	searchConfigFile = args.inputFile;
 	printSearchResults = args.results;
+	priorityMatch = args.priorityMatch;
 	# websiteURL="http://jnjsandbox5.service-now.com/iris_gl"
 	# websiteURL="http://jnjtrain.service-now.com/iris_gl"
 	 
@@ -312,7 +328,7 @@ def getCommandLineArgs():
 		vprint ("   %s: %s\n" % (cmdlineOption, vars(args)[cmdlineOption]))
 	vprint("\n\n");
 
-	return [verbose, printSearchResults, pauseDuration, websiteURL, searchConfigFile];
+	return [verbose, printSearchResults, pauseDuration, websiteURL, searchConfigFile, priorityMatch];
 
 # ------------------------------------------------------------------------------
 
@@ -362,7 +378,7 @@ def closeBroswer(browser):
 
 # Get the command-line args that were passed in (as well as defaults for no args)
 verbose = False;
-[verbose, printSearchResults, pauseDuration, websiteURL, searchConfigFile] = getCommandLineArgs();
+[verbose, printSearchResults, pauseDuration, websiteURL, searchConfigFile, priorityMatch] = getCommandLineArgs();
 
 # Get the search terms
 #searchListDefault = readDefaultSearchList();
@@ -380,7 +396,7 @@ browser = openBrowser();
 # Loop through all the desired tests, and call the test function
 print ("\n\n *** Searching now (%s) ***\n\n" % (websiteURL))
 for (count,row) in enumerate(searchList):
-	searchInIrisServicePortal(browser, count+1, len(searchList), websiteURL, row[0], row[1], row[2]);
+	searchInIrisServicePortal(browser, count+1, len(searchList), websiteURL, row[0], row[1], row[2], row[3], priorityMatch);
 
 closeBroswer(browser);
 
