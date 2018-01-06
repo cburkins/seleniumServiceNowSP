@@ -43,20 +43,24 @@ Example of usage:
 
 ```
 
-$ python spTest.py -h
+[NA+CBURKIN@WLPF0SGDR4 seleniumServiceNowSP (master)]$ python spTest.py -h
 usage: spTest.py [-h] [-v] [-r] [-p PAUSESECS] [-w WEBSITEURL] [-s INPUTFILE]
+                 [-priority PRIORITYMATCH]
 
 Does search testing on Iris (ServiceNow) website
 
 optional arguments:
-  -h, --help     show this help message and exit
-  -v             verbose_mode
-  -r             print search results
-  -p PAUSESECS   amount to pause selenium tester
-  -w WEBSITEURL  ServiceNow website to test against
-  -s INPUTFILE   list of search terms to run (in CSV format with one header
-                 row)
-
+  -h, --help            show this help message and exit
+  -v                    verbose_mode
+  -r                    print detailed search results (10-15 rows of output
+                        per search
+  -p PAUSESECS          amount to pause selenium tester
+  -w WEBSITEURL         ServiceNow website to test against
+  -s INPUTFILE          list of search terms to run (in CSV format with one
+                        header row)
+  -priority PRIORITYMATCH
+                        only runs tests which match this regular expression
+                        (e.g. "P1" or "P1|P2")
 
 ```
 
@@ -65,17 +69,20 @@ optional arguments:
 The format of the input file (CSV), and assumes that first line is column headers.  
 
 - Column1: sys_id of the item you'd like to find
-- Column2: Friendly name of the catalog item 
-- Column3: text for the search field
+- Column2: Priority indicator (e.g. P1, P2, P3, but can really be anything)
+- Column3: Friendly name of the catalog/KB item (used when item can't be found) 
+- Column4: text for the search field (this is what you'll really be search with)
+- Column5: Comment (completely ignored for now, just handy for notes in the input file)
 
 Example of intput file
 
 ```
-Sys ID,SID/OG,Search Term
-3e94804b6f88ad041e02e3764b3ee4cf,"new hire, moves and transfers, employee/partner conversions",new hire
-cb41e2e56f8329001e02e3764b3ee4c1,Suspend IT services for long-term leave,leave
-c21f80036f4865c038ef17831c3ee4b1,Modify email/account name/change field/VIP status,change email address
-c21f80036f4865c038ef17831c3ee4b1,Modify email/account name/change field/VIP status,change account name
+Sys ID,Priority,SID/OG,Search Term,Comment
+3e94804b6f88ad041e02e3764b3ee4cf,P1,"new hire, moves and transfers, employee/partner conversions",new hire,Comment
+cb41e2e56f8329001e02e3764b3ee4c1,P2,Suspend IT services for long-term leave,leave,Comment
+c21f80036f4865c038ef17831c3ee4b1,P1,Modify email/account name/change field/VIP status,change email address,Comment
+c21f80036f4865c038ef17831c3ee4b1,P1,Modify email/account name/change field/VIP status,change account name,Comment
+2ac07a2d4f2a0f04f23b11ff0310c7f1,P1,How to Use Outlook Email,email,Comment
 ```
 
 ### Screenshots

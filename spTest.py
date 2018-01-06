@@ -300,7 +300,7 @@ def getCommandLineArgs():
 	# Configure command-line flag for verbose output
 	parser.add_argument('-v', dest='verbose', action='store_true', help='verbose_mode')
 	# Configure command-line flag for results output
-	parser.add_argument('-r', dest='results', action='store_true', help='print search results')
+	parser.add_argument('-r', dest='results', action='store_true', help='print detailed search results (10-15 rows of output per search')
 	# Configure command-line flag selecting a pause duration
 	parser.add_argument('-p', type=int, dest="pauseSecs", help='amount to pause selenium tester', default=1)
 	# Configure command-line flag selecting a website
@@ -308,7 +308,7 @@ def getCommandLineArgs():
 	# Configure command-line flag selecting a configuration file (for search terms)
 	parser.add_argument('-s', type=str, dest="inputFile", default="SearchMonitoringCriteria2.csv", help='list of search terms to run (in CSV format with one header row)')
 	# Configure command-line flag providing a priority match string (e.g. P1)
-	parser.add_argument('-priority', type=str, dest="priorityMatch", help='only runs tests which match this express', default=".*")
+	parser.add_argument('-priority', type=str, dest="priorityMatch", help='only runs tests which match this regular expression (e.g. "P1" or "P1|P2")', default=".*")
 
 	# Get the object returned by parse_args
 	args = parser.parse_args()
@@ -373,6 +373,19 @@ def closeBroswer(browser):
 	browser.close();
 
 # ------------------------------------------------------------------------------
+
+def printWarning():
+	print ("#########################################################################")
+	print ("#########################################################################")
+	print ("You are 100% responsible for all the actions taken in this script")
+	print ("If you're about to run this in PRODUCTION and you have ADMIN privs,")
+	print ("please MAKE SURE you understand this code, and the actions it takes")
+	print ("You're about to make hundreds or thousands of clicks in the browser,")
+	print ("And it will happen so fast you'll barely be able to see it")
+	print ("Please be VERY CAREFUL before clicking go")
+	print ("#########################################################################")
+	print ("#########################################################################")
+# ------------------------------------------------------------------------------
 # --------------------------- Main ---------------------------------------------
 # ------------------------------------------------------------------------------
 
@@ -386,6 +399,8 @@ searchList = readSearchConfig(searchConfigFile);
 
 # Show the user all the parameters
 printParams();
+
+printWarning();
 
 # If the user doesn't answer 'y', program will exit
 getConfirmation("\nReady to go ? ");
