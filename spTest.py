@@ -449,6 +449,7 @@ elif (desiredBrowser == "IE11"):
 	browser = openBrowserIE11();
 else:
 	print ("\n\n   Error: Browser name %s is not valid\n\n\n" % desiredBrowser);
+	sys.exit();
 
 # Loop through all the desired tests, and call the test function
 print ("\n\n *** Searching now (%s) ***\n\n" % (websiteURL))
