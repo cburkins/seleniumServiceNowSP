@@ -165,7 +165,7 @@ def searchInIrisServicePortal(browser, currentCount, totalCount, websiteURL, sea
 
 		# Load the desired website
 		browser.get(websiteURL);
-		browser.implicitly_wait(10) # seconds
+		browser.implicitly_wait(30) # seconds
 
 		# Wait for the search box to show up
 		elem = browser.find_element_by_xpath("//*[@id='homepage-search']/div/div[1]/div[2]/form/div/input");
@@ -184,20 +184,26 @@ def searchInIrisServicePortal(browser, currentCount, totalCount, websiteURL, sea
 		# Explicity Wait for search results to show up on screen
 		wait = WebDriverWait(browser, 20)
 		xPathDesired="//h4[contains(text(),'Search results for:')]"
-		wait.until(EC.visibility_of_element_located((By.XPATH, xPathDesired)))
+		#wait.until(EC.visibility_of_element_located((By.XPATH, xPathDesired)))
+		wait.until(EC.presence_of_element_located((By.XPATH, xPathDesired)))
 		time.sleep(pauseDuration);
 
 		# Explicitly wait until we find the specific search result we want
 		# Construct correct XPath to find the desired catalog item on the page
 		xPathDesired = "//a[contains(@href,'%s')]" % (sys_id)
+		cssDesired = "a[href*='%s']" % (sys_id)
+
 		# Make sure that implicit wait is zero, else it seems to override the explict wait
 		browser.implicitly_wait(0) # seconds
 		# Set explicity wait for 2 seconds
 		wait = WebDriverWait(browser, 2)
 		try:
-			wait.until(EC.visibility_of_element_located((By.XPATH, xPathDesired)))
-		except:
+			#wait.until(EC.visibility_of_element_located((By.XPATH, xPathDesired)))
+			wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, cssDesired)))
+		except Exception as e: 
 			print ("%s                (UserTxt: %s)" % (getColorString("FAIL", RED), truncateAddEllipse(itemTitle,30)));
+			#print (e.__doc__);
+			#print (e.message);
 		else:
 			desiredLink = browser.find_element_by_xpath(xPathDesired);
 			[position, numResults] = positionInAllResults(browser, sys_id);
@@ -305,6 +311,12 @@ def getCommandLineArgs():
 	parser.add_argument('-p', type=int, dest="pauseSecs", help='amount to pause selenium tester', default=1)
 	# Configure command-line flag selecting a website
 	parser.add_argument('-w', type=str, dest="websiteURL", action="store", default="http://jnjtrain.service-now.com/iris_gl", help='ServiceNow website to test against')
+
+
+	# Configure command-line flag selecting a browser
+	parser.add_argument('-b', type=str, dest="desiredBrowser", action="store", default="chrome", help='browser (chrome|edge|IE11)')
+
+
 	# Configure command-line flag selecting a configuration file (for search terms)
 	parser.add_argument('-s', type=str, dest="inputFile", default="SearchMonitoringCriteria2.csv", help='list of search terms to run (in CSV format with one header row)')
 	# Configure command-line flag providing a priority match string (e.g. P1)
@@ -318,6 +330,7 @@ def getCommandLineArgs():
 	searchConfigFile = args.inputFile;
 	printSearchResults = args.results;
 	priorityMatch = args.priorityMatch;
+	desiredBrowser = args.desiredBrowser;
 	# websiteURL="http://jnjsandbox5.service-now.com/iris_gl"
 	# websiteURL="http://jnjtrain.service-now.com/iris_gl"
 	 
@@ -328,13 +341,14 @@ def getCommandLineArgs():
 		vprint ("   %s: %s\n" % (cmdlineOption, vars(args)[cmdlineOption]))
 	vprint("\n\n");
 
-	return [verbose, printSearchResults, pauseDuration, websiteURL, searchConfigFile, priorityMatch];
+	return [verbose, desiredBrowser, printSearchResults, pauseDuration, websiteURL, searchConfigFile, priorityMatch];
 
 # ------------------------------------------------------------------------------
 
 def printParams():
 	print("\n");
 	print("%20s: %s" % ("Website URL", websiteURL));
+	print("%20s: %s" % ("browser", desiredBrowser))
 	print("%20s: %s" % ("configFile", searchConfigFile))
 	print("%20s: %s" % ("Pause Duration", pauseDuration))
 	print("%20s: %d" % ("Number of tests", len(searchList)))
@@ -352,7 +366,7 @@ def getConfirmation(theQuestion):
 
 # ------------------------------------------------------------------------------
 
-def openBrowser():
+def openBrowserChrome():
 	chrome_options = Options()
 
 	# I think  you can also use browser.maximize_window(), perhaps browser agnostic ?
@@ -361,10 +375,31 @@ def openBrowser():
 	#chrome_options.add_argument("headless")
 	# Option to supress errors such as "[8916:7132:1219/182838.145:ERROR:process_metrics.cc(105)] NOT IMPLEMENTED"
 	chrome_options.add_argument("--log-level=3")
-	print ("\n *** Opening browser ***\n")
+	print ("\n *** Opening Chrome browser ***\n")
 	browser = webdriver.Chrome(chrome_options=chrome_options)
 	return browser;
 
+# ------------------------------------------------------------------------------
+
+def openBrowserEdge():
+
+	print ("\n *** Opening Edge browser ***\n")
+	browser = webdriver.Edge()
+	return browser;
+
+
+# ------------------------------------------------------------------------------
+
+def openBrowserIE11():
+
+	print ("\n *** Opening IE11 browser ***\n")
+
+	# This requires IEDriverServer.exe to be in your OS execution path
+	# This can be downloaded from https://github.com/SeleniumHQ/selenium/wiki/InternetExplorerDriver
+	# Docs suggest using 32-bit version of IEDriverServer.exe even if your IE11 is 64-bit
+	# 64-bit version seems to input characters to browser VERY slowly
+	browser = webdriver.Ie()
+	return browser;
 
 # ------------------------------------------------------------------------------
 
@@ -391,7 +426,7 @@ def printWarning():
 
 # Get the command-line args that were passed in (as well as defaults for no args)
 verbose = False;
-[verbose, printSearchResults, pauseDuration, websiteURL, searchConfigFile, priorityMatch] = getCommandLineArgs();
+[verbose, desiredBrowser, printSearchResults, pauseDuration, websiteURL, searchConfigFile, priorityMatch] = getCommandLineArgs();
 
 # Get the search terms
 #searchListDefault = readDefaultSearchList();
@@ -406,7 +441,14 @@ printWarning();
 getConfirmation("\nReady to go ? ");
 
 # Open the browser
-browser = openBrowser();
+if (desiredBrowser == "chrome"):
+	browser = openBrowserChrome();
+elif (desiredBrowser == "edge"):
+	browser = openBrowserEdge();
+elif (desiredBrowser == "IE11"):
+	browser = openBrowserIE11();
+else:
+	print ("\n\n   Error: Browser name %s is not valid\n\n\n" % desiredBrowser);
 
 # Loop through all the desired tests, and call the test function
 print ("\n\n *** Searching now (%s) ***\n\n" % (websiteURL))
