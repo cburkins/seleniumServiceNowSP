@@ -5,7 +5,7 @@ Automated testing of searching a ServiceNow Service Portal.  Reads the results, 
 
 ### Environment
 
-This was developed on a Windows 10 machine using chrome.  No testing was done on other platforms/browsers yet
+This was developed on a Windows 10 machine using chrome.  It also works for Microsoft Edge and Microsoft IE11 (on Windows 10).  It might work on Windows 7, but I haven't tested it yet.
 
 ### Installation (for usage on the much better CygWin terminal/shell)
 
@@ -24,7 +24,15 @@ export PYTHONPATH=/usr/lib/python2.7
 
 
 - In Cygwin, install pip via "easy_install-2.7 pip"
-- In Cygwin, install selenium via "pip install selenium"
+- In Cygwin, install selenium via "pip install selenium" (you may need to update this often, check here https://pypi.python.org/pypi/selenium)
+
+You'll also need to download all the webdriver programs, one for each browser type
+
+- Chrome: Install "chromedriver.exe" into your OS executable path (search on Google)
+- Edge: Install "MicrosoftWebDriver.exe" into same (search on Google)
+- IE11: Install "IEDriverServer.exe" into same (download from https://github.com/SeleniumHQ/selenium/wiki/InternetExplorerDriver)
+
+NOTE: I prefer using Cygwin, so I put all these into C:/cygwin64/home/userid/bin, and then add that to my .bashrc PATH (see just above)
 
 
 ### Installation (for usage on the boring and awful Windows prompt)
@@ -43,9 +51,9 @@ Example of usage:
 
 ```
 
-[NA+CBURKIN@WLPF0SGDR4 seleniumServiceNowSP (master)]$ python spTest.py -h
-usage: spTest.py [-h] [-v] [-r] [-p PAUSESECS] [-w WEBSITEURL] [-s INPUTFILE]
-                 [-priority PRIORITYMATCH]
+[NA+CBURKIN@WLPF0SGDR4 seleniumServiceNowSP (addIE)]$ python spTest.py -h
+usage: spTest.py [-h] [-v] [-r] [-p PAUSESECS] [-w WEBSITEURL]
+                 [-b DESIREDBROWSER] [-s INPUTFILE] [-priority PRIORITYMATCH]
 
 Does search testing on Iris (ServiceNow) website
 
@@ -56,11 +64,13 @@ optional arguments:
                         per search
   -p PAUSESECS          amount to pause selenium tester
   -w WEBSITEURL         ServiceNow website to test against
+  -b DESIREDBROWSER     browser (chrome|edge|IE11)
   -s INPUTFILE          list of search terms to run (in CSV format with one
                         header row)
   -priority PRIORITYMATCH
                         only runs tests which match this regular expression
                         (e.g. "P1" or "P1|P2")
+
 
 ```
 
