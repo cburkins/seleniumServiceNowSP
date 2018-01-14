@@ -314,7 +314,7 @@ def getCommandLineArgs():
 
 
 	# Configure command-line flag selecting a browser
-	parser.add_argument('-b', type=str, dest="desiredBrowser", action="store", default="chrome", help='browser (chrome|edge|IE11)')
+	parser.add_argument('-b', type=str, dest="desiredBrowser", action="store", default="chrome", help='browser (chrome|firefox|edge|IE11)')
 
 
 	# Configure command-line flag selecting a configuration file (for search terms)
@@ -403,6 +403,15 @@ def openBrowserIE11():
 
 # ------------------------------------------------------------------------------
 
+def openBrowserFirefox():
+
+	print ("\n *** Opening Firefox browser ***\n")
+	browser = webdriver.Firefox()
+	return browser;
+
+
+# ------------------------------------------------------------------------------
+
 def closeBroswer(browser):
 	print "\n\nAll finished, closing the browser now..."
 	browser.close();
@@ -447,6 +456,8 @@ elif (desiredBrowser == "edge"):
 	browser = openBrowserEdge();
 elif (desiredBrowser == "IE11"):
 	browser = openBrowserIE11();
+elif (desiredBrowser == "firefox"):
+	browser = openBrowserFirefox();
 else:
 	print ("\n\n   Error: Browser name %s is not valid\n\n\n" % desiredBrowser);
 	sys.exit();

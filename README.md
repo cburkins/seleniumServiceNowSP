@@ -5,7 +5,7 @@ Automated testing of searching a ServiceNow Service Portal.  Reads the results, 
 
 ### Environment
 
-This was developed on a Windows 10 machine using chrome.  It also works for Microsoft Edge and Microsoft IE11 (on Windows 10).  It might work on Windows 7, but I haven't tested it yet.
+This was developed on a Windows 10 machine using chrome.  It also works for Microsoft Edge, Microsoft IE11, and Firefox (all on Windows 10).  It might work on Windows 7, but I haven't tested it yet.
 
 ### Installation (for usage on the much better CygWin terminal/shell)
 
@@ -31,6 +31,7 @@ You'll also need to download all the webdriver programs, one for each browser ty
 - Chrome: Install "chromedriver.exe" into your OS executable path (search on Google)
 - Edge: Install "MicrosoftWebDriver.exe" into same (search on Google)
 - IE11: Install "IEDriverServer.exe" into same (download from https://github.com/SeleniumHQ/selenium/wiki/InternetExplorerDriver)
+- Firefox: Installed "geckodriver.exe" into same (download from https://github.com/mozilla/geckodriver/releases)
 
 NOTE: I prefer using Cygwin, so I put all these into C:/cygwin64/home/userid/bin, and then add that to my .bashrc PATH (see just above)
 
