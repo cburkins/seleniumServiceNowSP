@@ -1,11 +1,13 @@
 ## Testing ServiceNow (Service Portal) with Selenium
 
-Automated testing of searching a ServiceNow Service Portal.  Reads the results, verifies that the desired item is present.  Shows you how far down the list the result is.
+Automated testing of searching a ServiceNow Service Portal.  This can be any generic ServiceNow Service Portal website (see below on getting one).  Reads the results, verifies that the desired item is present.  Shows you how far down the list the result is.
 
 
 ### Environment
 
 This was developed on a Windows 10 machine using chrome.  It also works for Microsoft Edge, Microsoft IE11, and Firefox (all on Windows 10).  It might work on Windows 7, but I haven't tested it yet.
+
+As for the ServiceNow instance, it works with any generic ServiceNow instance.  You can get your own free ServiceNow instance via the ServiceNow developers program (https://developer.servicenow.com).  The script looks for the homepage search field, and types searches into it.  To find that field, it relies on the HTML field ID, which is "homepage-search".  So, if you're ServiceNow instance does not use the Out-of-the-box ID for the search field, you'll need to create your own version of this script.
 
 ### Installation (for usage on the much better CygWin terminal/shell)
 
@@ -52,7 +54,7 @@ Example of usage:
 
 ```
 
-[NA+CBURKIN@WLPF0SGDR4 seleniumServiceNowSP (addIE)]$ python spTest.py -h
+[seleniumServiceNowSP (master)]$ python ./spTest.py  -h
 usage: spTest.py [-h] [-v] [-r] [-p PAUSESECS] [-w WEBSITEURL]
                  [-b DESIREDBROWSER] [-s INPUTFILE] [-priority PRIORITYMATCH]
 
@@ -65,12 +67,13 @@ optional arguments:
                         per search
   -p PAUSESECS          amount to pause selenium tester
   -w WEBSITEURL         ServiceNow website to test against
-  -b DESIREDBROWSER     browser (chrome|edge|IE11)
+  -b DESIREDBROWSER     browser (chrome|firefox|edge|IE11)
   -s INPUTFILE          list of search terms to run (in CSV format with one
                         header row)
   -priority PRIORITYMATCH
                         only runs tests which match this regular expression
                         (e.g. "P1" or "P1|P2")
+[seleniumServiceNowSP (master)]$
 
 
 ```
@@ -96,7 +99,9 @@ c21f80036f4865c038ef17831c3ee4b1,P1,Modify email/account name/change field/VIP s
 2ac07a2d4f2a0f04f23b11ff0310c7f1,P1,How to Use Outlook Email,email,Comment
 ```
 
-### Screenshots
+<!-- ### Screenshots
 
 ![alt text](screenshots/example-output-cygwin.png "Screenshot of colored output using cygwin")
+
+-->
 
