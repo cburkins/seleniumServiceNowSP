@@ -232,6 +232,11 @@ def readSearchConfig(configFileName):
 		next(searchConfigFile, None);
 		# Loop through all the remaining rows
 		for row in searchConfigFile:
+
+			# Joe's contribution for handling ASPAC character sets in the input file
+			# UTF-8 is backwards compatible with ASCII
+			row = [x.decode('utf-8') for x in row]
+
 			vprint("Reading line: %s" % (row))
 			# File is currently sys_id, title, search_term
 			# Create a row where order search_term, sys_sid, title
