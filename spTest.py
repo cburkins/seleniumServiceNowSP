@@ -161,6 +161,11 @@ def searchInIrisServicePortal(browser, currentCount, totalCount, websiteURL, sea
 	sys.stdout.write("(%03d/%03d) %-40s  Search:%-37s %s " % (currentCount, totalCount, truncateAddEllipse(itemTitle,40), "'" + search_string + "'", testPriority))
 	sys.stdout.flush();
 
+
+	# Helps to skip any line items in the input file which have an empty search_string
+	if not search_string:
+		testPriority = "Er"	
+
 	if (re.match(priorityMatch, testPriority) and (testPriority != "Er")):
 
 		# Load the desired website
